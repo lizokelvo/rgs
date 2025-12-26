@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет - {{ current_user.username }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="mb-0">Личный кабинет</h1>
+        <p class="text-muted">Управление вашим профилем и настройками</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Вернуться в магазин
+        </a>
+    </div>
+</div>
+
+<div class="row">
+
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person-circle"></i> Профиль пользователя</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <div class="avatar-circle mx-auto mb-3">
+                        <span class="initials">{{ current_user.username[:2]|upper }}</span>
+                    </div>
+                    <h4>{{ current_user.username }}</h4>
+                    {% if current_user.is_admin %}
+                    <span class="badge bg-danger">
+                        <i class="bi bi-shield-check"></i> Администратор
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-person-check"></i> Пользователь
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span><i class="bi bi-envelope"></i> Email:</span>
+                        <strong>{{ current_user.email or 'Не указан' }}</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span><i class="bi bi-calendar-check"></i> Дата регистрации:</span>
+                        <strong>{{ current_user.created_at.strftime('%d.%m.%Y') }}</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span><i class="bi bi-clock-history"></i> В системе:</span>
+                        <strong>{{ (now - current_user.created_at).days }} дней</strong>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span><i class="bi bi-cart"></i> Товаров в корзине:</span>
+                        <strong id="current-cart-count">Загрузка...</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-lightning"></i> Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('cart') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-cart"></i> Перейти в корзину
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-success">
+                        <i class="bi bi-shop"></i> Продолжить покупки
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right"></i> Выйти из системы
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Статистика покупок</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card p-3 bg-info bg-opacity-10 rounded">
+                            <div class="display-6 text-info">
+                                <i class="bi bi-cart"></i>
+                            </div>
+                            <h4 id="total-orders">0</h4>
+                            <p class="text-muted mb-0">Всего заказов</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card p-3 bg-success bg-opacity-10 rounded">
+                            <div class="display-6 text-success">
+                                <i class="bi bi-currency-exchange"></i>
+                            </div>
+                            <h4 id="total-spent">0 ₽</h4>
+                            <p class="text-muted mb-0">Всего потрачено</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card p-3 bg-warning bg-opacity-10 rounded">
+                            <div class="display-6 text-warning">
+                                <i class="bi bi-box"></i>
+                            </div>
+                            <h4 id="items-bought">0</h4>
+                            <p class="text-muted mb-0">Куплено товаров</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card p-3 bg-primary bg-opacity-10 rounded">
+                            <div class="display-6 text-primary">
+                                <i class="bi bi-star"></i>
+                            </div>
+                            <h4>Новичок</h4>
+                            <p class="text-muted mb-0">Ваш статус</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Статистика обновляется после каждой покупки
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Последние действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6>Регистрация в системе</h6>
+                            <p class="text-muted mb-0">{{ current_user.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6>Последний вход в систему</h6>
+                            <p class="text-muted mb-0">Сегодня, {{ now.strftime('%H:%M') }}</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content">
+                            <h6>Добавление товаров в корзину</h6>
+                            <p class="text-muted mb-0">Активно: <span id="active-cart-items">0</span> товаров</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Опасная зона</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h6><i class="bi bi-exclamation-octagon"></i> Внимание!</h6>
+                    <p class="mb-2">Эти действия необратимы. После удаления аккаунта:</p>
+                    <ul class="mb-2">
+                        <li>Все ваши данные будут удалены без возможности восстановления</li>
+                        <li>История заказов будет потеряна</li>
+                        <li>Текущая корзина будет очищена</li>
+                    </ul>
+                    <p class="mb-0">Пожалуйста, убедитесь в своем решении перед продолжением.</p>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6>Удаление аккаунта</h6>
+                        <p class="text-muted mb-0">Навсегда удалить ваш аккаунт и все связанные данные</p>
+                    </div>
+                    <button id="delete-account-btn" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Удалить аккаунт
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Подтверждение удаления</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="display-1 text-danger">
+                        <i class="bi bi-person-x"></i>
+                    </div>
+                    <h4>Вы уверены?</h4>
+                    <p>Вы собираетесь удалить свой аккаунт <strong>{{ current_user.username }}</strong>.</p>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-octagon"></i>
+                        Это действие <strong>необратимо</strong>. Все ваши данные будут удалены навсегда.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm-username" class="form-label">
+                            Для подтверждения введите ваш логин: <strong>{{ current_user.username }}</strong>
+                        </label>
+                        <input type="text" class="form-control" id="confirm-username" 
+                               placeholder="Введите ваш логин">
+                        <div class="form-text">Это необходимо для подтверждения удаления</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete" disabled>
+                    <i class="bi bi-trash"></i> Да, удалить аккаунт
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Аккаунт удален</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="display-1 text-success mb-3">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <h4>Аккаунт успешно удален</h4>
+                <p>Все ваши данные были удалены из системы.</p>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Вы будете перенаправлены на главную страницу
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.initials {
+    font-size: 2.5rem;
+}
+
+.stat-card {
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.timeline-content {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+}
+
+.btn-outline-primary, .btn-outline-success, .btn-outline-secondary {
+    transition: all 0.3s;
+}
+
+.btn-outline-primary:hover, .btn-outline-success:hover, .btn-outline-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.display-6 {
+    font-size: 2.5rem;
+}
+
+.modal .display-1 {
+    font-size: 4rem;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.bi {
+    margin-right: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Модальные окна
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    
+    // Загрузка статистики корзины
+    function loadCartStats() {
+        fetch('/api/cart/count')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('current-cart-count').textContent = data.count;
+                document.getElementById('active-cart-items').textContent = data.count;
+            })
+            .catch(error => {
+                console.error('Error loading cart stats:', error);
+                document.getElementById('current-cart-count').textContent = 'Ошибка загрузки';
+            });
+    }
+    
+    // Загрузка статистики покупок 
+    function loadPurchaseStats() {
+        // В реальном приложении здесь был бы API для получения статистики
+        // Для демонстрации используем фиктивные данные
+        setTimeout(() => {
+            document.getElementById('total-orders').textContent = '3';
+            document.getElementById('total-spent').textContent = '156,400 ₽';
+            document.getElementById('items-bought').textContent = '8';
+        }, 500);
+    }
+    
+    // Проверка ввода логина для подтверждения удаления
+    const confirmInput = document.getElementById('confirm-username');
+    const confirmButton = document.getElementById('confirm-delete');
+    
+    confirmInput.addEventListener('input', function() {
+        confirmButton.disabled = this.value !== '{{ current_user.username }}';
+    });
+    
+    // Открытие модального окна удаления
+    document.getElementById('delete-account-btn').addEventListener('click', function() {
+        deleteModal.show();
+    });
+    
+    // Подтверждение удаления аккаунта
+    document.getElementById('confirm-delete').addEventListener('click', function() {
+        this.innerHTML = '<i class="bi bi-hourglass"></i> Удаляем...';
+        this.disabled = true;
+        
+        fetch('/delete_account', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                deleteModal.hide();
+                successModal.show();
+                
+                // Перенаправление через 3 секунды
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 3000);
+            } else {
+                alert('Ошибка при удалении аккаунта');
+                this.innerHTML = '<i class="bi bi-trash"></i> Да, удалить аккаунт';
+                this.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка сети при удалении аккаунта');
+            this.innerHTML = '<i class="bi bi-trash"></i> Да, удалить аккаунт';
+            this.disabled = false;
+        });
+    });
+    
+    // Анимация статистических карточек
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 8px 15px rgba(0,0,0,0.1)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Текущая дата для отображения
+    const now = new Date();
+    
+    // Загрузка данных при открытии страницы
+    loadCartStats();
+    loadPurchaseStats();
+    
+    // Обновление данных каждые 30 секунд
+    setInterval(loadCartStats, 30000);
+});
+</script>
+
+{% set now = namespace() %}
+{% set now.now = now %}
+{% if not now.now %}
+    {% set now.now = datetime.utcnow() %}
+{% endif %}
+{% endblock %}
